@@ -13,7 +13,6 @@
 #include <sys/time.h>
 #include <unistd.h>
 
-#define PORT 8080
 #define BUFFER_SIZE 4096 * 16
 #define TIMEOUT_MS 500
 
@@ -76,7 +75,22 @@ void *handle_client(void *arg) {
   return NULL;
 }
 
-int main() {
+int main(int argc, char *argv[]) {
+  int port;
+
+  if (argc >= 2) {
+    int maybe_port = atoi(argv[1]);
+
+    if (maybe_port >= 1 && maybe_port <= ((1 << 16) - 1)) {
+      port = maybe_port;
+    } else {
+      perror("Invalid port!");
+      return 1;
+    }
+  } else {
+    port = 8080;
+  }
+
   signal(SIGINT, handle_signal);
   signal(SIGTERM, handle_signal);
 
@@ -89,7 +103,7 @@ int main() {
   // Configure server
   struct sockaddr_in server_addr = {.sin_family = AF_INET,
                                     .sin_addr = {.s_addr = INADDR_ANY},
-                                    .sin_port = htons(PORT)};
+                                    .sin_port = htons(port)};
 
   // Bind config
   if (bind(server_fd, (struct sockaddr *)&server_addr, sizeof(server_addr)) <
